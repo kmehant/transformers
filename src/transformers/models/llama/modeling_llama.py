@@ -271,8 +271,11 @@ def apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
     Returns:
         `tuple(torch.Tensor)` comprising of the query and key tensors rotated using the Rotary Position Embedding.
     """
+    print(cos.shape)
     cos = cos.unsqueeze(unsqueeze_dim)
     sin = sin.unsqueeze(unsqueeze_dim)
+    print(cos.shape)
+    print(q.shape)
     q_embed = (q * cos) + (rotate_half(q) * sin)
     k_embed = (k * cos) + (rotate_half(k) * sin)
     return q_embed, k_embed
@@ -403,6 +406,7 @@ class LlamaAttention(nn.Module):
                 "`position_embeddings` (Tuple of tensors, containing cos and sin). In v4.45 `position_ids` will be "
                 "removed and `position_embeddings` will be mandatory."
             )
+            print("using rotary")
             cos, sin = self.rotary_emb(value_states, position_ids)
         else:
             cos, sin = position_embeddings
@@ -607,6 +611,7 @@ class LlamaSdpaAttention(LlamaAttention):
             )
 
         bsz, q_len, _ = hidden_states.size()
+        print(f"hidden_states {hidden_states.shape}")
 
         query_states = self.q_proj(hidden_states)
         key_states = self.k_proj(hidden_states)
@@ -1353,6 +1358,8 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         for _, llama_layer in enumerate(self.model.layers):
             # Adjust attention module to use the local number of heads
             attn_layer = llama_layer.self_attn
+            print("tensor mesh shape ind 0 : ")
+            print(tensor_parallel_mesh.mesh.shape[0])
             attn_layer.num_heads = attn_layer.num_heads // tensor_parallel_mesh.mesh.shape[0]
             attn_layer.num_key_value_heads = attn_layer.num_key_value_heads // tensor_parallel_mesh.mesh.shape[0]
 
