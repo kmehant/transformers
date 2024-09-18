@@ -3660,7 +3660,7 @@ class Trainer:
                     torch.save(state_dict, os.path.join(output_dir, WEIGHTS_NAME))
         else:
             self.model.save_pretrained(
-                output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
+                output_dir, state_dict=state_dict, safe_serialization=False
             )
 
         if self.tokenizer is not None:

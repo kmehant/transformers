@@ -310,6 +310,9 @@ class LlamaMLP(nn.Module):
             ]
             down_proj = sum(down_proj)
         else:
+            print("proj")
+            print(self.up_proj)
+            print(x.shape)
             down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
         return down_proj
@@ -1336,23 +1339,28 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         
         # plan for each transformer block
         layer_tp_plan = {
-            "input_layernorm": SequenceParallel(),
-            "self_attn": PrepareModuleInput(
-                input_layouts=(Shard(1), ),
-                desired_input_layouts=(Replicate(), ),
-            ),
+            # "input_layernorm": SequenceParallel(sequence_dim=2),
+            # "self_attn": PrepareModuleInput(
+            #     input_layouts=(Shard(1), ),
+            #     desired_input_layouts=(Replicate(), ),
+            # ),
+            "self_attn": PrepareModuleInput(),
             "self_attn.q_proj": ColwiseParallel(),
             "self_attn.k_proj": ColwiseParallel(),
             "self_attn.v_proj": ColwiseParallel(),
-            "self_attn.o_proj": RowwiseParallel(output_layouts=Shard(1)),
-            "post_attention_layernorm": SequenceParallel(),
-            "mlp": PrepareModuleInput(
-                input_layouts=(Shard(1),),
-                desired_input_layouts=(Replicate(),),
-            ),
-            "mlp.gate_proj": ColwiseParallel(),
-            "mlp.up_proj": RowwiseParallel(output_layouts=Shard(1)),
-            "mlp.down_proj": ColwiseParallel(),
+            # "self_attn.o_proj": RowwiseParallel(output_layouts=Shard(1)),
+            "self_attn.o_proj": RowwiseParallel(),
+            # "post_attention_layernorm": SequenceParallel(),
+            # "mlp": PrepareModuleInput(
+            #     input_layouts=(Shard(1),),
+            #     desired_input_layouts=(Replicate(),),
+            # ),
+            # "mlp": PrepareModuleInput(),
+            # col col row
+            # "mlp.gate_proj": ColwiseParallel(),
+            # # "mlp.up_proj": RowwiseParallel(output_layouts=Shard(1)),
+            # "mlp.up_proj": RowwiseParallel(),
+            # "mlp.down_proj": ColwiseParallel(),
         }
         print("in llama")
         for _, llama_layer in enumerate(self.model.layers):
@@ -1369,21 +1377,22 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
                 layer_tp_plan
             )
 
-        self.model = parallelize_module(
-            self.model,
-            tensor_parallel_mesh,
-            {
-                "embed_tokens": RowwiseParallel(
-                    input_layouts=Replicate(),
-                    output_layouts=Shard(1),
-                ),  # (B, L, D) -> (B, L // tp_size, D)
-                "norm": SequenceParallel(),
-                "lm_head": ColwiseParallel(
-                    input_layouts=Shard(1),
-                    output_layouts=Replicate()
-                ),
-            },
-        )
+        # self.model = parallelize_module(
+        #     self.model,
+        #     tensor_parallel_mesh,
+        #     {
+        #         "embed_tokens": RowwiseParallel(
+        #             input_layouts=Replicate(),
+        #             output_layouts=Shard(1),
+        #         ),  # (B, L, D) -> (B, L // tp_size, D)
+        #         "norm": SequenceParallel(),
+        #         "lm_head": ColwiseParallel(
+        #             input_layouts=Shard(1),
+        #             output_layouts=Replicate(),
+        #             use_local_output=False,
+        #         ),
+        #     },
+        # )
         # import torch
         # torch.distributed.breakpoint()
 
