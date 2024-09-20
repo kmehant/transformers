@@ -2283,6 +2283,7 @@ class Trainer:
 
             step = -1
             for step, inputs in enumerate(epoch_iterator):
+                print(f"inputs hash => {inputs}")
                 total_batched_samples += 1
 
                 if self.args.include_num_input_tokens_seen:
@@ -4780,6 +4781,11 @@ class Trainer:
             args["dataloader_config"] = dataloader_config
         else:
             args.update(accelerator_config)
+        # tp is initialized at Accelerator init phase so
+        # args should be prepared here
+        if self.args.tp_size > 0:
+            self.is_tp_enabled = True
+            args["torch_tp_plugin"] = TorchTensorParallelPlugin(tp_size=self.args.tp_size)
 
         # create accelerator object
         self.accelerator = Accelerator(**args)
@@ -4795,9 +4801,6 @@ class Trainer:
         self.is_deepspeed_enabled = getattr(self.accelerator.state, "deepspeed_plugin", None) is not None
         self.is_fsdp_enabled = getattr(self.accelerator.state, "fsdp_plugin", None) is not None
         self.is_tp_enabled = getattr(self.accelerator.state, "tp_plugin", None) is not None
-        if self.args.tp_size > 0:
-            self.is_tp_enabled = True
-            self.accelerator.state.torch_tp_plugin = TorchTensorParallelPlugin(tp_size=self.args.tp_size)
         # post accelerator creation setup
         if self.is_fsdp_enabled:
             fsdp_plugin = self.accelerator.state.fsdp_plugin

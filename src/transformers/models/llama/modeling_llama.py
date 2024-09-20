@@ -1355,12 +1355,12 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
             #     input_layouts=(Shard(1),),
             #     desired_input_layouts=(Replicate(),),
             # ),
-            # "mlp": PrepareModuleInput(),
+            "mlp": PrepareModuleInput(),
             # col col row
-            # "mlp.gate_proj": ColwiseParallel(),
-            # # "mlp.up_proj": RowwiseParallel(output_layouts=Shard(1)),
-            # "mlp.up_proj": RowwiseParallel(),
-            # "mlp.down_proj": ColwiseParallel(),
+            "mlp.gate_proj": ColwiseParallel(),
+            # "mlp.up_proj": RowwiseParallel(output_layouts=Shard(1)),
+            "mlp.up_proj": ColwiseParallel(),
+            "mlp.down_proj": RowwiseParallel(),
         }
         print("in llama")
         for _, llama_layer in enumerate(self.model.layers):
