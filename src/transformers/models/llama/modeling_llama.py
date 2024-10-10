@@ -1335,30 +1335,26 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         # self.model = self.model.to("cuda")
 
         tensor_parallel_mesh = sub_mesh
-
         
+
+        init_tp_plan = {
+            "embed_tokens": RowwiseParallel(input_layouts=Replicate()),
+        }
+        self.model = parallelize_module(self.model, tensor_parallel_mesh, init_tp_plan)
         # plan for each transformer block
         layer_tp_plan = {
-            # "input_layernorm": SequenceParallel(sequence_dim=2),
-            # "self_attn": PrepareModuleInput(
-            #     input_layouts=(Shard(1), ),
-            #     desired_input_layouts=(Replicate(), ),
-            # ),
             "self_attn": PrepareModuleInput(),
             "self_attn.q_proj": ColwiseParallel(),
             "self_attn.k_proj": ColwiseParallel(),
             "self_attn.v_proj": ColwiseParallel(),
             # "self_attn.o_proj": RowwiseParallel(output_layouts=Shard(1)),
-            "self_attn.o_proj": RowwiseParallel(),
-            # "post_attention_layernorm": SequenceParallel(),
             # "mlp": PrepareModuleInput(
-            #     input_layouts=(Shard(1),),
-            #     desired_input_layouts=(Replicate(),),
-            # ),
+            #         input_layouts=(Shard(1),),
+            #         desired_input_layouts=(Replicate(),),
+            #     ),
+            "self_attn.o_proj": RowwiseParallel(),
             "mlp": PrepareModuleInput(),
-            # col col row
             "mlp.gate_proj": ColwiseParallel(),
-            # "mlp.up_proj": RowwiseParallel(output_layouts=Shard(1)),
             "mlp.up_proj": ColwiseParallel(),
             "mlp.down_proj": RowwiseParallel(),
         }
@@ -1376,25 +1372,6 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
                 tensor_parallel_mesh,
                 layer_tp_plan
             )
-
-        # self.model = parallelize_module(
-        #     self.model,
-        #     tensor_parallel_mesh,
-        #     {
-        #         "embed_tokens": RowwiseParallel(
-        #             input_layouts=Replicate(),
-        #             output_layouts=Shard(1),
-        #         ),  # (B, L, D) -> (B, L // tp_size, D)
-        #         "norm": SequenceParallel(),
-        #         "lm_head": ColwiseParallel(
-        #             input_layouts=Shard(1),
-        #             output_layouts=Replicate(),
-        #             use_local_output=False,
-        #         ),
-        #     },
-        # )
-        # import torch
-        # torch.distributed.breakpoint()
 
 @add_start_docstrings(
     """
