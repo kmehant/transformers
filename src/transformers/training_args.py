@@ -1229,7 +1229,7 @@ class TrainingArguments:
         },
     )
     tp_size: Optional[int] = field(
-        default=None,
+        default=0,
         metadata={
             "help": (
                 "tensor parallel size for pytorch"
@@ -1924,7 +1924,7 @@ class TrainingArguments:
             if self.fsdp_config["xla_fsdp_grad_ckpt"]:
                 warnings.warn("`--xla_fsdp_grad_ckpt` is useful only when `--xla` is set to true.")
 
-        if self.tp_size > 0:
+        if self.tp_size > 1:
             os.environ["ACCELERATE_USE_TP"] = "true"
         # accelerate integration for FSDP
         if len(self.fsdp) > 0 and is_accelerate_available("0.28.0"):

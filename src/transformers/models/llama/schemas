@@ -1,0 +1,461 @@
+schemas
+
+deployment
+
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Generated schema for Root",
+    "type": "object",
+    "properties": {
+      "apiVersion": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "labels": {
+            "type": "object",
+            "properties": {
+              "app": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "app"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "namespace",
+          "labels"
+        ]
+      },
+      "spec": {
+        "type": "object",
+        "properties": {
+          "replicas": {
+            "type": "number"
+          },
+          "selector": {
+            "type": "object",
+            "properties": {
+              "matchLabels": {
+                "type": "object",
+                "properties": {
+                  "app": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "app"
+                ]
+              }
+            },
+            "required": [
+              "matchLabels"
+            ]
+          },
+          "template": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "labels": {
+                    "type": "object",
+                    "properties": {
+                      "app": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "app"
+                    ]
+                  }
+                },
+                "required": [
+                  "labels"
+                ]
+              },
+              "spec": {
+                "type": "object",
+                "properties": {
+                  "containers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "image": {
+                          "type": "string"
+                        },
+                        "ports": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "containerPort": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "containerPort"
+                            ]
+                          }
+                        },
+                        "resources": {
+                          "type": "object",
+                          "properties": {
+                            "requests": {
+                              "type": "object",
+                              "properties": {
+                                "memory": {
+                                  "type": "string"
+                                },
+                                "cpu": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "memory",
+                                "cpu"
+                              ]
+                            },
+                            "limits": {
+                              "type": "object",
+                              "properties": {
+                                "memory": {
+                                  "type": "string"
+                                },
+                                "cpu": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "memory",
+                                "cpu"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requests",
+                            "limits"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "image",
+                        "ports",
+                        "resources"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "containers"
+                ]
+              }
+            },
+            "required": [
+              "metadata",
+              "spec"
+            ]
+          }
+        },
+        "required": [
+          "replicas",
+          "selector",
+          "template"
+        ]
+      }
+    },
+    "required": [
+      "apiVersion",
+      "kind",
+      "metadata",
+      "spec"
+    ]
+}
+
+ingress
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Generated schema for Root",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {
+            "nginx.ingress.kubernetes.io/rewrite-target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nginx.ingress.kubernetes.io/rewrite-target"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "namespace",
+        "annotations"
+      ]
+    },
+    "spec": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "http": {
+                "type": "object",
+                "properties": {
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "backend": {
+                          "type": "object",
+                          "properties": {
+                            "serviceName": {
+                              "type": "string"
+                            },
+                            "servicePort": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "serviceName",
+                            "servicePort"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "backend"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "paths"
+                ]
+              }
+            },
+            "required": [
+              "host",
+              "http"
+            ]
+          }
+        }
+      },
+      "required": [
+        "rules"
+      ]
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ]
+}
+
+
+pod
+
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Generated schema for Root",
+    "type": "object",
+    "properties": {
+      "apiVersion": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "namespace"
+        ]
+      },
+      "spec": {
+        "type": "object",
+        "properties": {
+          "containers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "image": {
+                  "type": "string"
+                },
+                "ports": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "containerPort": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "containerPort"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "image",
+                "ports"
+              ]
+            }
+          }
+        },
+        "required": [
+          "containers"
+        ]
+      }
+    },
+    "required": [
+      "apiVersion",
+      "kind",
+      "metadata",
+      "spec"
+    ]
+}
+
+service
+
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Generated schema for Root",
+    "type": "object",
+    "properties": {
+      "apiVersion": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "namespace"
+        ]
+      },
+      "spec": {
+        "type": "object",
+        "properties": {
+          "selector": {
+            "type": "object",
+            "properties": {
+              "app": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "app"
+            ]
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "port": {
+                  "type": "number"
+                },
+                "targetPort": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "port",
+                "targetPort"
+              ]
+            }
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "selector",
+          "ports",
+          "type"
+        ]
+      }
+    },
+    "required": [
+      "apiVersion",
+      "kind",
+      "metadata",
+      "spec"
+    ]
+}
+
+
+

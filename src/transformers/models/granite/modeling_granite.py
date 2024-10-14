@@ -1190,6 +1190,61 @@ class GraniteForCausalLM(GranitePreTrainedModel):
         )
         return model_inputs
 
+    def apply_tensor_parallel(self, sub_mesh):
+        self.model = self.model.to("cuda")
+        # self.tensor_parallel_size = tensor_parallel_size
+        from torch.distributed._tensor import Shard, Replicate
+        from torch.distributed.tensor.parallel import (
+            parallelize_module,
+            ColwiseParallel,
+            RowwiseParallel,
+            PrepareModuleInput,
+        )
+
+        # make sure the mode is on the cuda
+        # assert torch.cuda.is_available(), f"torch.cuda is not available"
+        # self.model = self.model.to("cuda")
+
+        tensor_parallel_mesh = sub_mesh
+        
+
+        init_tp_plan = {
+            "embed_tokens": RowwiseParallel(input_layouts=Replicate()),
+        }
+        self.model = parallelize_module(self.model, tensor_parallel_mesh, init_tp_plan)
+        # plan for each transformer block
+        layer_tp_plan = {
+            "self_attn": PrepareModuleInput(),
+            "self_attn.q_proj": ColwiseParallel(),
+            "self_attn.k_proj": ColwiseParallel(),
+            "self_attn.v_proj": ColwiseParallel(),
+            # "self_attn.o_proj": RowwiseParallel(output_layouts=Shard(1)),
+            # "mlp": PrepareModuleInput(
+            #         input_layouts=(Shard(1),),
+            #         desired_input_layouts=(Replicate(),),
+            #     ),
+            "self_attn.o_proj": RowwiseParallel(),
+            "mlp": PrepareModuleInput(),
+            "mlp.gate_proj": ColwiseParallel(),
+            "mlp.up_proj": ColwiseParallel(),
+            "mlp.down_proj": RowwiseParallel(),
+        }
+        print("in llama")
+        for _, llama_layer in enumerate(self.model.layers):
+            # Adjust attention module to use the local number of heads
+            attn_layer = llama_layer.self_attn
+            print("tensor mesh shape ind 0 : ")
+            print(tensor_parallel_mesh.mesh.shape[0])
+            attn_layer.num_heads = attn_layer.num_heads // tensor_parallel_mesh.mesh.shape[0]
+            attn_layer.num_key_value_heads = attn_layer.num_key_value_heads // tensor_parallel_mesh.mesh.shape[0]
+
+            llama_layer = parallelize_module(
+                llama_layer,
+                tensor_parallel_mesh,
+                layer_tp_plan
+            )
+
+
     @staticmethod
     def _reorder_cache(past_key_values, beam_idx):
         reordered_past = ()

@@ -1318,7 +1318,6 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         return model_inputs
 
     def apply_tensor_parallel(self, sub_mesh):
-        # tensor parallel is model and code-dependent, so I think it's better to put it here 
         self.model = self.model.to("cuda")
         # self.tensor_parallel_size = tensor_parallel_size
         from torch.distributed._tensor import Shard, Replicate
@@ -1327,7 +1326,6 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
             ColwiseParallel,
             RowwiseParallel,
             PrepareModuleInput,
-            SequenceParallel,
         )
 
         # make sure the mode is on the cuda

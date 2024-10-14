@@ -1,0 +1,36 @@
+# Give me Kubernetes JSONs to deploy my image ”myapp:latest” and exposing it.
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "name": "my-pod"
+  },
+  "spec": {
+    "containers": [
+      {
+        "name": "my-container",
+        "image": "myapp:latest"
+      }
+    ]
+  }
+}
+
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "my-service"
+  },
+  "spec": {
+    "selector": {
+      "app": "my-pod"
+    },
+    "ports": [
+      {
+        "protocol": "TCP",
+        "port": 80,
+        "targetPort": 80
+      }
+    ]
+  }
+}
