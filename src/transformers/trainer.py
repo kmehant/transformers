@@ -2423,7 +2423,9 @@ class Trainer:
                     # the `or` condition of `is_last_step_and_steps_less_than_grad_acc` is not covered
                     # in accelerate. So, explicitly enable sync gradients to True in that case.
                     if is_last_step_and_steps_less_than_grad_acc:
-                        self.accelerator.gradient_state._set_sync_gradients(True)
+                        print(self.accelerator.gradient_state)
+                        print(self.accelerator.gradient_state.sync_gradients)
+                        # self.accelerator.gradient_state._set_sync_gradients(True)
 
                     # Gradient clipping
                     if args.max_grad_norm is not None and args.max_grad_norm > 0:
@@ -2453,11 +2455,17 @@ class Trainer:
                                 grad_norm = grad_norm.item()
                         else:
                             grad_norm = _grad_norm
-
+                    
+                    print("callbacks: ", self.callback_handler.callbacks)
                     self.control = self.callback_handler.on_pre_optimizer_step(args, self.state, self.control)
                     if self.state.is_world_process_zero:
                         print("do step")
+                    params_before = [p.clone().detach() for p in model.parameters()]
                     self.optimizer.step()
+                    res = True
+                    for i, p in enumerate(model.parameters()):
+                        res = res and torch.equal(params_before[i], p)
+                    print("EQ: ", res)
 
                     self.control = self.callback_handler.on_optimizer_step(args, self.state, self.control)
 
