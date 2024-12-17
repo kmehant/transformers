@@ -2462,7 +2462,7 @@ class Trainer:
                     if self.state.is_world_process_zero:
                         print("do step")
                     params_before = [p.clone().detach() for p in model.parameters()]
-                    print(self.optimizer.optimizer.state_dict()['state'].values())
+                    print(self.optimizer.optimizer.state_dict())
                     self.optimizer.step()
                     res = True
                     for i, p in enumerate(model.parameters()):
