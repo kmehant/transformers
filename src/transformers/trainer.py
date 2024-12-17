@@ -2455,7 +2455,8 @@ class Trainer:
                             grad_norm = _grad_norm
 
                     self.control = self.callback_handler.on_pre_optimizer_step(args, self.state, self.control)
-
+                    if self.state.is_world_process_zero:
+                        print("do step")
                     self.optimizer.step()
 
                     self.control = self.callback_handler.on_optimizer_step(args, self.state, self.control)
