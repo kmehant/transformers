@@ -2407,8 +2407,12 @@ class Trainer:
                 is_last_step_and_steps_less_than_grad_acc = (
                     steps_in_epoch <= args.gradient_accumulation_steps and (step + 1) == steps_in_epoch
                 )
-                
-                print("is last step?  : ", is_last_step_and_steps_less_than_grad_acc)
+                if self.state.is_world_process_zero:
+                    print("#######")
+                    print("is last step?  : ", is_last_step_and_steps_less_than_grad_acc)
+                    print("steps_in_epoch: ", steps_in_epoch)
+                    print("step: ", step)
+                    print("#######")
 
                 if (
                     total_batched_samples % args.gradient_accumulation_steps == 0
