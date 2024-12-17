@@ -2425,7 +2425,8 @@ class Trainer:
                     if is_last_step_and_steps_less_than_grad_acc:
                         print(self.accelerator.gradient_state)
                         print(self.accelerator.gradient_state.sync_gradients)
-                        # self.accelerator.gradient_state._set_sync_gradients(True)
+                        self.accelerator.step += 1
+                        self.accelerator.gradient_state._set_sync_gradients(True)
 
                     # Gradient clipping
                     if args.max_grad_norm is not None and args.max_grad_norm > 0:
