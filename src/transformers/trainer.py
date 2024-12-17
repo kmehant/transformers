@@ -1081,7 +1081,7 @@ class Trainer:
         Trainer's init through `optimizers`, or subclass and override this method in a subclass.
         """
         opt_model = self.model_wrapped if is_sagemaker_mp_enabled() else self.model
-
+        print("self.optimizer: ", self.optimizer)
         if self.optimizer is None:
             decay_parameters = self.get_decay_parameter_names(opt_model)
             optimizer_grouped_parameters = [
@@ -1100,6 +1100,7 @@ class Trainer:
             ]
 
             optimizer_cls, optimizer_kwargs = self.get_optimizer_cls_and_kwargs(self.args, opt_model)
+            print("optimizer class: ", optimizer_cls)
 
             # Overwrite `params` in case it's created by `get_optimizer_cls_and_kwargs`
             # e.g. for GaLore optimizer.
@@ -1117,7 +1118,7 @@ class Trainer:
                 optimizer_grouped_parameters = optimizer_kwargs.pop("optimizer_dict")
 
             self.optimizer = optimizer_cls(optimizer_grouped_parameters, **optimizer_kwargs)
-
+            print("new optimizer: ", self.optimizer)
             if optimizer_cls.__name__ == "Adam8bit":
                 import bitsandbytes
 
@@ -2406,6 +2407,8 @@ class Trainer:
                 is_last_step_and_steps_less_than_grad_acc = (
                     steps_in_epoch <= args.gradient_accumulation_steps and (step + 1) == steps_in_epoch
                 )
+                
+                print("is last step?  : ", is_last_step_and_steps_less_than_grad_acc)
 
                 if (
                     total_batched_samples % args.gradient_accumulation_steps == 0
