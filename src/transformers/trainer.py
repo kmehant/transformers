@@ -3834,7 +3834,7 @@ class Trainer:
 
         if output_dir is None:
             output_dir = self.args.output_dir
-
+        print("entered this")
         if is_torch_xla_available():
             self._save_tpu(output_dir)
         elif is_sagemaker_mp_enabled():
@@ -3847,9 +3847,11 @@ class Trainer:
                 # 'user_content.pt' indicates model state_dict saved with smp >= 1.10
                 Path(os.path.join(output_dir, "user_content.pt")).touch()
         elif self.is_fsdp_enabled:
+            print("is fsdp enabled")
             if ("FULL_STATE_DICT" in str(self.accelerator.state.fsdp_plugin.state_dict_type)) and (
                 version.parse(accelerate_version) > version.parse("0.24.1")
             ):
+                print("state dict")
                 state_dict = self.accelerator.get_state_dict(self.model)
                 if self.args.should_save:
                     self._save(output_dir, state_dict=state_dict)
