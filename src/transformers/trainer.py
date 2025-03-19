@@ -593,6 +593,7 @@ class Trainer:
             or ((args.fp16_full_eval or args.bf16_full_eval) and not args.do_train)
             or self.is_fsdp_xla_enabled
             or self.is_fsdp_enabled
+            or self.is_fsdp2_enabled
         ):
             self.place_model_on_device = False
 
@@ -2219,7 +2220,7 @@ class Trainer:
                 raise ValueError(f"No valid checkpoint found in output directory ({args.output_dir})")
 
         if resume_from_checkpoint is not None:
-            if not is_sagemaker_mp_enabled() and not self.is_deepspeed_enabled and not self.is_fsdp_enabled:
+            if not is_sagemaker_mp_enabled() and not self.is_deepspeed_enabled and not (self.is_fsdp_enabled or self.is_fsdp2_enabled):
                 self._load_from_checkpoint(resume_from_checkpoint)
             # In case of repeating the find_executable_batch_size, set `self._train_batch_size` properly
             state = TrainerState.load_from_json(os.path.join(resume_from_checkpoint, TRAINER_STATE_NAME))
@@ -2317,7 +2318,7 @@ class Trainer:
             else:
                 debug_overflow = DebugUnderflowOverflow(self.model)  # noqa
 
-        delay_optimizer_creation = is_sagemaker_mp_enabled() or self.is_fsdp_xla_enabled or self.is_fsdp_enabled
+        delay_optimizer_creation = is_sagemaker_mp_enabled() or self.is_fsdp_xla_enabled or self.is_fsdp_enabled or self.is_fsdp2_enabled
 
         # We need to reset the scheduler, as its parameters may be different on subsequent calls
         if self._created_lr_scheduler:
@@ -2399,7 +2400,7 @@ class Trainer:
                 deepspeed_load_checkpoint(
                     self.model_wrapped, resume_from_checkpoint, load_module_strict=not _is_peft_model(self.model)
                 )
-            elif is_sagemaker_mp_enabled() or self.is_fsdp_enabled:
+            elif is_sagemaker_mp_enabled() or self.is_fsdp_enabled or self.is_fsdp2_enabled:
                 self._load_from_checkpoint(resume_from_checkpoint, self.model_wrapped)
 
         # Check if saved optimizer or scheduler states exist
@@ -2780,7 +2781,7 @@ class Trainer:
             else []
         )
 
-        if is_fsdp_ckpt and not self.is_fsdp_enabled:
+        if is_fsdp_ckpt and not (self.is_fsdp_enabled or self.is_fsdp2_enabled):
             raise ValueError(f"Checkpoint found at {resume_from_checkpoint} is only supported when using PyTorch FSDP")
 
         if not (
@@ -2839,7 +2840,7 @@ class Trainer:
                     load_result = model.load_state_dict(state_dict, strict=True)
                     # release memory
                     del state_dict
-            elif self.is_fsdp_enabled:
+            elif self.is_fsdp_enabled or self.is_fsdp2_enabled:
                 load_fsdp_model(
                     self.accelerator.state.fsdp_plugin,
                     self.accelerator,
@@ -2919,7 +2920,7 @@ class Trainer:
                 self.state.best_model_checkpoint,
                 load_module_strict=not _is_peft_model(self.model),
             )
-        elif self.is_fsdp_enabled:
+        elif self.is_fsdp_enabled or self.is_fsdp2_enabled:
             load_result = load_fsdp_model(
                 self.accelerator.state.fsdp_plugin,
                 self.accelerator,
@@ -3329,7 +3330,7 @@ class Trainer:
                 self.model_wrapped.save_checkpoint(output_dir, exclude_frozen_parameters=True)
             else:
                 self.model_wrapped.save_checkpoint(output_dir)
-        elif self.is_fsdp_enabled:
+        elif self.is_fsdp_enabled or self.is_fsdp2_enabled:
             # save fsdp specific ckpt for resuming from ckpt
             save_fsdp_model(
                 self.accelerator.state.fsdp_plugin, self.accelerator, self.model, output_dir, **_get_fsdp_ckpt_kwargs()
@@ -3435,7 +3436,7 @@ class Trainer:
                     # In distributed training however, we load directly on each GPU and risk the GPU OOM as it's more
                     # likely to get OOM on CPU (since we load num_gpu times the optimizer state
                     map_location = self.args.device if self.args.world_size > 1 else "cpu"
-                    if self.is_fsdp_enabled:
+                    if self.is_fsdp_enabled or self.is_fsdp2_enabled:
                         load_fsdp_optimizer(
                             self.accelerator.state.fsdp_plugin,
                             self.accelerator,
@@ -4264,7 +4265,7 @@ class Trainer:
             )
             self.model_preparation_time = round(time.time() - start_time, 4)
 
-            if self.is_fsdp_enabled:
+            if self.is_fsdp_enabled or self.is_fsdp2_enabled:
                 self.model = model
 
             # for the rest of this function `model` is the outside model, whether it was wrapped or not
@@ -4862,11 +4863,11 @@ class Trainer:
         if len(self.accelerator._models) == 0 and model is self.model:
             model = (
                 self.accelerator.prepare(model)
-                if self.is_deepspeed_enabled or self.is_fsdp_enabled
+                if self.is_deepspeed_enabled or self.is_fsdp_enabled or self.is_fsdp2_enabled
                 else self.accelerator.prepare_model(model, evaluation_mode=True)
             )
 
-            if self.is_fsdp_enabled:
+            if self.is_fsdp_enabled or self.is_fsdp2_enabled:
                 self.model = model
 
             # for the rest of this function `model` is the outside model, whether it was wrapped or not
@@ -5146,6 +5147,8 @@ class Trainer:
         # deepspeed and accelerate flags covering both trainer args and accelerate launcher
         self.is_deepspeed_enabled = getattr(self.accelerator.state, "deepspeed_plugin", None) is not None
         self.is_fsdp_enabled = getattr(self.accelerator.state, "fsdp_plugin", None) is not None
+        if getattr(self.accelerator.state, "fsdp2_plugin", None) is not None:
+            self.is_fsdp2_enabled = True
         self.is_tp_enabled = getattr(self.accelerator.state, "torch_tp_plugin", None) is not None
         # post accelerator creation setup
         if self.is_fsdp_enabled:
@@ -5165,7 +5168,7 @@ class Trainer:
         # `save_only_model` can't be used with DeepSpeed/FSDP along with `load_best_model_at_end`
         if (
             self.args.save_only_model
-            and (self.is_deepspeed_enabled or self.is_fsdp_enabled)
+            and (self.is_deepspeed_enabled or self.is_fsdp_enabled or self.is_fsdp2_enabled)
             and self.args.load_best_model_at_end
         ):
             wrapper = "DeepSpeed" if self.is_deepspeed_enabled else "FSDP"
