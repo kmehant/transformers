@@ -2348,7 +2348,7 @@ class Trainer:
             # In case of auto_find_batch_size=True
             # Remove FSDP wrapping from sub-models.
             self.model = unwrap_model(self.model, recursive=True)
-
+        torch.distributed.breakpoint()
         if delay_optimizer_creation:
             if use_accelerator_prepare:
                 # configure fsdp plugin for qlora if any
