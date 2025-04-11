@@ -3725,6 +3725,8 @@ class Trainer:
             return loss_mb.reduce_mean().detach().to(self.args.device)
 
         with self.compute_loss_context_manager():
+            for n,p in model.named_parameters():
+                print(n, p.dtype)
             loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
 
         del inputs
