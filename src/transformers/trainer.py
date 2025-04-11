@@ -3727,9 +3727,9 @@ class Trainer:
         with self.compute_loss_context_manager():
             # for some reason lora adapter are in float32 which is not compatible with fsdpv2
             model = model.to(torch.bfloat16)
-            for n,p in model.named_parameters():
-                if p.requires_grad:
-                    print(n)
+            # for n,p in model.named_parameters():
+            #     if p.requires_grad:
+            #         print(n)
             loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
 
         del inputs
