@@ -2348,7 +2348,6 @@ class Trainer:
             # In case of auto_find_batch_size=True
             # Remove FSDP wrapping from sub-models.
             self.model = unwrap_model(self.model, recursive=True)
-
         if delay_optimizer_creation:
             if use_accelerator_prepare:
                 # configure fsdp plugin for qlora if any
@@ -3725,6 +3724,8 @@ class Trainer:
             return loss_mb.reduce_mean().detach().to(self.args.device)
 
         with self.compute_loss_context_manager():
+            # for some reason lora adapter are in float32 which is not compatible with fsdpv2
+            model = model.to(torch.bfloat16)
             loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
 
         del inputs
