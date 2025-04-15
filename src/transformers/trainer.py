@@ -2582,10 +2582,12 @@ class Trainer:
                                     args.max_grad_norm,
                                 )
                             else:
-                                _grad_norm = self.accelerator.clip_grad_norm_(
-                                    model.parameters(),
-                                    args.max_grad_norm,
-                                )
+                                from torch.distributed._tensor.experimental import implicit_replication
+                                with implicit_replication():
+                                    _grad_norm = self.accelerator.clip_grad_norm_(
+                                        model.parameters(),
+                                        args.max_grad_norm,
+                                    )
 
                             if (
                                 is_accelerate_available()
@@ -2599,8 +2601,9 @@ class Trainer:
                                 grad_norm = _grad_norm
 
                         self.control = self.callback_handler.on_pre_optimizer_step(args, self.state, self.control)
-
-                        self.optimizer.step()
+                        from torch.distributed._tensor.experimental import implicit_replication
+                        with implicit_replication():
+                            self.optimizer.step()
 
                         self.control = self.callback_handler.on_optimizer_step(args, self.state, self.control)
 
@@ -3725,7 +3728,11 @@ class Trainer:
 
         with self.compute_loss_context_manager():
             # for some reason lora adapter are in float32 which is not compatible with fsdpv2
-            model = model.to(torch.bfloat16)
+            try:
+                model = model.to(torch.bfloat16)
+            except:
+                # when quant bnb is on this would fail and we would need to silently ignore
+                pass
             loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
 
         del inputs
