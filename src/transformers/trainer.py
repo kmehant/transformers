@@ -3801,13 +3801,16 @@ class Trainer:
         def get_mem_MB():
             torch.cuda.synchronize()
             return torch.cuda.memory_allocated() / 1024 ** 2
+        data = {}
         def make_forward_hook(name):
             def forward_hook(module, input, output):
                 print(f"{name}_forward", get_mem_MB())
+                data[f"{name}_forward"] = get_mem_MB()
             return forward_hook
 
         def backward_hook(module, grad_input, grad_output):
             print(f"{module} -- backward", get_mem_MB())
+            data[f"{module}_backward"] = get_mem_MB()
 
         for name, module in model.named_modules():
             if "attention" in name.lower():
@@ -3816,6 +3819,7 @@ class Trainer:
                     module.register_full_backward_hook(backward_hook)
 
         outputs = model(**inputs)
+        print(data)
         # Save past state if it exists
         # TODO: this needs to be fixed and made cleaner later.
         if self.args.past_index >= 0:
