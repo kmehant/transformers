@@ -387,6 +387,7 @@ class Llama4TextDecoderLayer(nn.Module):
         self.post_attention_layernorm = Llama4TextRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
 
         self.layer_idx = layer_idx
+        self.gradient_checkpointing = False
 
     def forward(
         self,
@@ -411,23 +412,43 @@ class Llama4TextDecoderLayer(nn.Module):
             attention_mask = chunk_causal_mask
 
         # Self Attention
-        attention_states, self_attn_weights = self.self_attn(
-            hidden_states=hidden_states,
-            position_embeddings=position_embeddings,
-            attention_mask=attention_mask,
-            past_key_value=past_key_value,
-            output_attentions=output_attentions,
-            use_cache=use_cache,
-            cache_position=cache_position,
-            **kwargs,
-        )
+        # below are mising due to grad checkpointing
+        # output_attentions
+        # use_cache
+        if self.gradient_checkpointing and self.training:
+            attention_states, self_attn_weights = self._gradient_checkpointing_func(
+                self.self_attn.__call__,
+                hidden_states,
+                position_embeddings,
+                attention_mask,
+                past_key_value,
+                cache_position,
+            )
+        else:
+            attention_states, self_attn_weights = self.self_attn(
+                hidden_states=hidden_states,
+                position_embeddings=position_embeddings,
+                attention_mask=attention_mask,
+                past_key_value=past_key_value,
+                output_attentions=output_attentions,
+                use_cache=use_cache,
+                cache_position=cache_position,
+                **kwargs,
+            )
         hidden_states = residual + attention_states
 
         # Fully Connected
         residual = hidden_states
 
         hidden_states = self.post_attention_layernorm(hidden_states)
-        hidden_states = self.feed_forward(hidden_states)
+        # grad checkpoint feedforward
+        if self.gradient_checkpointing and self.training:
+            hidden_states = self._gradient_checkpointing_func(
+                self.feed_forward.__call__,
+                hidden_states,
+            )
+        else:   
+            hidden_states = self.feed_forward(hidden_states)
         if self.is_moe_layer:
             hidden_states, router_logits = hidden_states
         else:
@@ -589,7 +610,7 @@ class Llama4TextModel(Llama4PreTrainedModel):
         )
         self.norm = Llama4TextRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.rotary_emb = Llama4TextRotaryEmbedding(config=config)
-        self.gradient_checkpointing = False
+        # self.gradient_checkpointing = False
 
         # Initialize weights and apply final processing
         self.post_init()
@@ -624,12 +645,13 @@ class Llama4TextModel(Llama4PreTrainedModel):
 
         if (input_ids is None) ^ (inputs_embeds is not None):
             raise ValueError("You must specify exactly one of input_ids or inputs_embeds")
-
-        if self.gradient_checkpointing and self.training and use_cache:
-            logger.warning_once(
-                "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`."
-            )
-            use_cache = False
+        # make use cache false always
+        use_cache = False
+        # if self.gradient_checkpointing and self.training and use_cache:
+        #     logger.warning_once(
+        #         "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`."
+        #     )
+        #     use_cache = False
 
         if inputs_embeds is None:
             inputs_embeds = self.embed_tokens(input_ids.to(self.embed_tokens.weight.device))
@@ -663,7 +685,7 @@ class Llama4TextModel(Llama4PreTrainedModel):
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
 
-            if self.gradient_checkpointing and self.training:
+            if hasattr(self, "gradient_checkpointing") and self.gradient_checkpointing and self.training:
                 layer_outputs = self._gradient_checkpointing_func(
                     decoder_layer.__call__,
                     hidden_states,
