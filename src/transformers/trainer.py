@@ -3798,6 +3798,24 @@ class Trainer:
             if num_items_in_batch is not None:
                 loss_kwargs["num_items_in_batch"] = num_items_in_batch
             inputs = {**inputs, **loss_kwargs}
+        def get_mem_MB():
+            torch.cuda.synchronize()
+            return torch.cuda.memory_allocated() / 1024 ** 2
+        def make_forward_hook(name):
+            def forward_hook(module, input, output):
+                print(f"{name}_forward", get_mem_MB())
+            return forward_hook
+
+        def make_backward_hook(name):
+            def backward_hook(module, grad_input, grad_output):
+                print(f"{name}_backward", get_mem_MB())
+            return backward_hook
+
+        for name, module in model.named_modules():
+            if len(list(module.children())) == 0:  # only leaf modules
+                module.register_forward_hook(make_forward_hook(name))
+                module.register_full_backward_hook(make_backward_hook(name))
+
         outputs = model(**inputs)
         # Save past state if it exists
         # TODO: this needs to be fixed and made cleaner later.
