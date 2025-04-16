@@ -3810,9 +3810,10 @@ class Trainer:
             print(f"{module} -- backward", get_mem_MB())
 
         for name, module in model.named_modules():
-            if len(list(module.children())) == 0:  # only leaf modules
-                module.register_forward_hook(make_forward_hook(name))
-                module.register_full_backward_hook(backward_hook)
+            if "attention" in name.lower():
+                if len(list(module.children())) == 0:  # only leaf modules
+                    module.register_forward_hook(make_forward_hook(name))
+                    module.register_full_backward_hook(backward_hook)
 
         outputs = model(**inputs)
         # Save past state if it exists
