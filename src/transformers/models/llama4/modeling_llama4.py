@@ -1747,6 +1747,7 @@ class Llama4ForConditionalGeneration(Llama4PreTrainedModel, GenerationMixin):
             inputs_embeds = self.get_input_embeddings()(input_ids)
 
         if pixel_values is not None:
+            print("in pixel values")
             image_features = self.get_image_features(
                 pixel_values=pixel_values,
                 vision_feature_layer=vision_feature_layer,
