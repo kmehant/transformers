@@ -610,7 +610,7 @@ class Llama4TextModel(Llama4PreTrainedModel):
         )
         self.norm = Llama4TextRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.rotary_emb = Llama4TextRotaryEmbedding(config=config)
-        # self.gradient_checkpointing = False
+        self.gradient_checkpointing = False
 
         # Initialize weights and apply final processing
         self.post_init()
