@@ -318,15 +318,15 @@ class Llama4TextAttention(nn.Module):
         input_shape = hidden_states.shape[:-1]
         hidden_shape = (*input_shape, -1, self.head_dim)
         if self.gradient_checkpointing is True and self.training:
-            query_states = self.gradient_checkpointing_func(
+            query_states = self._gradient_checkpointing_func(
                 self.q_proj.__call__,
                 hidden_states,
             ).view(hidden_shape)
-            key_states = self.gradient_checkpointing_func(
+            key_states = self._gradient_checkpointing_func(
                 self.k_proj.__call__,
                 hidden_states,
             ).view(*input_shape, -1, self.head_dim)
-            value_states = self.gradient_checkpointing_func(
+            value_states = self._gradient_checkpointing_func(
                 self.v_proj.__call__,
                 hidden_states,
             ).view(hidden_shape).transpose(1, 2)
@@ -1045,7 +1045,7 @@ class Llama4ForCausalLM(Llama4PreTrainedModel, GenerationMixin):
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         if self.gradient_checkpointing and self.training:
-            outputs = self.gradient_checkpointing_func(
+            outputs = self._gradient_checkpointing_func(
                 self.model.__call__,
                 input_ids,
                 attention_mask,
