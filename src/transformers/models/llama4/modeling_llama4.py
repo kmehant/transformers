@@ -304,6 +304,7 @@ class Llama4TextAttention(nn.Module):
         )
         if self.config.use_qk_norm and self.use_rope:
             self.qk_norm = Llama4TextL2Norm(config.rms_norm_eps)
+        self.gradient_checkpointing = True
 
     def forward(
         self,
@@ -316,10 +317,23 @@ class Llama4TextAttention(nn.Module):
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
         input_shape = hidden_states.shape[:-1]
         hidden_shape = (*input_shape, -1, self.head_dim)
-
-        query_states = self.q_proj(hidden_states).view(hidden_shape)
-        key_states = self.k_proj(hidden_states).view(*input_shape, -1, self.head_dim)
-        value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
+        if self.gradient_checkpointing is True and self.training:
+            query_states = self.gradient_checkpointing_func(
+                self.q_proj.__call__,
+                hidden_states,
+            ).view(hidden_shape)
+            key_states = self.gradient_checkpointing_func(
+                self.k_proj.__call__,
+                hidden_states,
+            ).view(*input_shape, -1, self.head_dim)
+            value_states = self.gradient_checkpointing_func(
+                self.v_proj.__call__,
+                hidden_states,
+            ).view(hidden_shape).transpose(1, 2)
+        else:
+            query_states = self.q_proj(hidden_states).view(hidden_shape)
+            key_states = self.k_proj(hidden_states).view(*input_shape, -1, self.head_dim)
+            value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
 
         if self.use_rope:  # the 16E model skips rope for long context on certain layers
             query_states, key_states = apply_rotary_emb(
@@ -447,7 +461,7 @@ class Llama4TextDecoderLayer(nn.Module):
                 self.feed_forward.__call__,
                 hidden_states,
             )
-        else:   
+        else:
             hidden_states = self.feed_forward(hidden_states)
         if self.is_moe_layer:
             hidden_states, router_logits = hidden_states
@@ -953,6 +967,7 @@ class Llama4ForCausalLM(Llama4PreTrainedModel, GenerationMixin):
 
         # Initialize weights and apply final processing
         self.post_init()
+        self.gradient_checkpointing = True
 
     def get_input_embeddings(self):
         return self.model.embed_tokens
@@ -1029,19 +1044,34 @@ class Llama4ForCausalLM(Llama4PreTrainedModel, GenerationMixin):
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
-        outputs = self.model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
-            past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
-            cache_position=cache_position,
-            **kwargs,
-        )
+        if self.gradient_checkpointing and self.training:
+            outputs = self.gradient_checkpointing_func(
+                self.model.__call__,
+                input_ids,
+                attention_mask,
+                position_ids,
+                past_key_values,
+                inputs_embeds,
+                use_cache,
+                output_attentions,
+                output_hidden_states,
+                return_dict,
+                cache_position,
+            )
+        else:
+            outputs = self.model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                past_key_values=past_key_values,
+                inputs_embeds=inputs_embeds,
+                use_cache=use_cache,
+                output_attentions=output_attentions,
+                output_hidden_states=output_hidden_states,
+                return_dict=return_dict,
+                cache_position=cache_position,
+                **kwargs,
+            )
 
         hidden_states = outputs[0]
         # Only compute necessary logits, and do not upcast them to float if we are not computing the loss
