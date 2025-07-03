@@ -2359,7 +2359,10 @@ class Trainer:
                     if delay_optimizer_creation:
                         model = self.accelerator.prepare(self.model)
                     else:
-                        model, self.optimizer = self.accelerator.prepare(self.model, self.optimizer)
+                        if self.is_tp_enabled:
+                            self.optimizer = self.accelerator.prepare(self.optimizer)
+                        else:
+                            model, self.optimizer = self.accelerator.prepare(self.model, self.optimizer)
             else:
                 # to handle cases wherein we pass "DummyScheduler" such as when it is specified in DeepSpeed config.
                 model, self.optimizer, self.lr_scheduler = self.accelerator.prepare(
