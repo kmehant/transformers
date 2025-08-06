@@ -5273,6 +5273,7 @@ class Trainer:
 
         # create accelerator object
         self.accelerator = Accelerator(**args)
+        print("trainer self.accelerator.parallelism_config", self.accelerator.parallelism_config)
         # some Trainer classes need to use `gather` instead of `gather_for_metrics`, thus we store a flag
         self.gather_function = self.accelerator.gather_for_metrics
 
