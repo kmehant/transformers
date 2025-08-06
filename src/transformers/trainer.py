@@ -2390,6 +2390,7 @@ class Trainer:
                     if self.is_tp_enabled:
                         self.optimizer = self.accelerator.prepare(self.optimizer)
                     else:
+                        print("trainer self.accelerator.parallelism_config", self.accelerator.parallelism_config)
                         model, self.optimizer = self.accelerator.prepare(self.model, self.optimizer)
             else:
                 # to handle cases wherein we pass "DummyScheduler" such as when it is specified in DeepSpeed config.
