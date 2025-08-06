@@ -2584,7 +2584,7 @@ class Trainer:
                             sequence = sequence[:max_length]
                             return torch.cat([
                                 sequence,
-                                torch.full((max_length - len(sequence),), pad_value, dtype=torch.long)
+                                torch.full((max_length - len(sequence),), pad_value, dtype=torch.long).to(sequence.device)
                             ])
 
                         input_ids = [pad_and_truncate(torch.tensor(example), pad_token_id, max_length) for example in batch["input_ids"]]
