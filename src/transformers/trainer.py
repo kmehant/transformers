@@ -2578,6 +2578,7 @@ class Trainer:
                         and self.accelerator.distributed_type != DistributedType.DEEPSPEED
                         else contextlib.nullcontext
                     )
+                    print("input ids shape", inputs["input_ids"].shape)
                     with self.accelerator.maybe_context_parallel(
                         buffers=[inputs["input_ids"], inputs["attention_mask"]], 
                         buffer_seq_dims=[1, 1],
