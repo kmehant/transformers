@@ -2587,9 +2587,9 @@ class Trainer:
                                 torch.full((max_length - len(sequence),), pad_value, dtype=torch.long)
                             ])
 
-                        input_ids = [pad_and_truncate(torch.tensor(example['input_ids']), pad_token_id, max_length) for example in batch]
-                        attention_mask = [pad_and_truncate(torch.tensor(example['attention_mask']), 0, max_length) for example in batch]
-                        labels = [pad_and_truncate(torch.tensor(example['labels']), label_pad_token_id, max_length) for example in batch]
+                        input_ids = [pad_and_truncate(torch.tensor(example), pad_token_id, max_length) for example in batch["input_ids"]]
+                        attention_mask = [pad_and_truncate(torch.tensor(example), 0, max_length) for example in batch["attention_mask"]]
+                        labels = [pad_and_truncate(torch.tensor(example), label_pad_token_id, max_length) for example in batch["labels"]]
 
                         return {
                             'input_ids': torch.stack(input_ids),
