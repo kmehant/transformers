@@ -2579,6 +2579,24 @@ class Trainer:
                         else contextlib.nullcontext
                     )
                     print("input ids shape", inputs["input_ids"].shape)
+                    def pad_batch(batch, max_length, pad_token_id=0, label_pad_token_id=-100):
+                        def pad_and_truncate(sequence, pad_value, max_length):
+                            sequence = sequence[:max_length]
+                            return torch.cat([
+                                sequence,
+                                torch.full((max_length - len(sequence),), pad_value, dtype=torch.long)
+                            ])
+
+                        input_ids = [pad_and_truncate(torch.tensor(example['input_ids']), pad_token_id, max_length) for example in batch]
+                        attention_mask = [pad_and_truncate(torch.tensor(example['attention_mask']), 0, max_length) for example in batch]
+                        labels = [pad_and_truncate(torch.tensor(example['labels']), label_pad_token_id, max_length) for example in batch]
+
+                        return {
+                            'input_ids': torch.stack(input_ids),
+                            'attention_mask': torch.stack(attention_mask),
+                            'labels': torch.stack(labels)
+                        }
+                    inputs = pad_batch(inputs,131072)
                     with self.accelerator.maybe_context_parallel(
                         buffers=[inputs["input_ids"], inputs["attention_mask"]], 
                         buffer_seq_dims=[1, 1],
