@@ -2578,7 +2578,6 @@ class Trainer:
                         and self.accelerator.distributed_type != DistributedType.DEEPSPEED
                         else contextlib.nullcontext
                     )
-                    print("input ids shape", inputs["input_ids"].shape)
                     def pad_batch(batch, max_length, pad_token_id=0, label_pad_token_id=-100):
                         def pad_and_truncate(sequence, pad_value, max_length):
                             sequence = sequence[:max_length]
@@ -2597,6 +2596,9 @@ class Trainer:
                             'labels': torch.stack(labels)
                         }
                     inputs = pad_batch(inputs,131072)
+                    print("input ids shape", inputs["input_ids"].shape)
+                    print("input ids shape", inputs["attention_mask"].shape)
+                    print("input ids shape", inputs["labels"].shape)
                     with self.accelerator.maybe_context_parallel(
                         buffers=[inputs["input_ids"], inputs["attention_mask"]], 
                         buffer_seq_dims=[1, 1],
