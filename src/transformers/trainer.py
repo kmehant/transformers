@@ -2596,16 +2596,17 @@ class Trainer:
                         return {
                             'input_ids': torch.stack(input_ids),
                             'attention_mask': torch.stack(attention_mask),
-                            'labels': torch.stack(labels)
+                            'labels': torch.stack(labels),
+                            'shift_labels': torch.stack(labels),
                         }
                     inputs = pad_batch(inputs,131072)
                     print("input ids shape", inputs["input_ids"].shape)
-                    print("input ids shape", inputs["attention_mask"].shape)
-                    print("input ids shape", inputs["labels"].shape)
+                    print("atn ids shape", inputs["attention_mask"].shape)
+                    print("label ids shape", inputs["labels"].shape)
                     with self.accelerator.maybe_context_parallel(
-                        buffers=[inputs["input_ids"], inputs["attention_mask"]], 
-                        buffer_seq_dims=[1, 1],
-                        no_restore_buffers={inputs["input_ids"]},
+                        buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
+                        buffer_seq_dims=[1, 1, 1],
+                        no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
                         ):
                             with context():
                                 tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
