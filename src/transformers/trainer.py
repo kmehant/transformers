@@ -2581,6 +2581,7 @@ class Trainer:
                     print("before input ids shape", inputs["input_ids"].shape)
                     print("before attn ids shape", inputs["attention_mask"].shape)
                     print("before labels ids shape", inputs["labels"].shape)
+                    @torch.no_grad()
                     def pad_batch(batch, max_length, pad_token_id=0, label_pad_token_id=-100):
                         def pad_and_truncate(sequence, pad_value, max_length):
                             sequence = sequence[:max_length]
