@@ -2579,6 +2579,7 @@ class Trainer:
                         else contextlib.nullcontext
                     )
                     print("before input ids shape", inputs["input_ids"].shape)
+                    print("before input ids", inputs["input_ids"])
                     print("before attn ids shape", inputs["attention_mask"].shape)
                     print("before labels ids shape", inputs["labels"].shape)
                     @torch.no_grad()
@@ -2602,6 +2603,7 @@ class Trainer:
                         }
                     inputs = pad_batch(inputs,131072)
                     print("input ids shape", inputs["input_ids"].shape)
+                    print("input ids", inputs["input_ids"])
                     print("atn ids shape", inputs["attention_mask"].shape)
                     print("label ids shape", inputs["labels"].shape)
                     with self.accelerator.maybe_context_parallel(
