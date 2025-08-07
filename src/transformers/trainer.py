@@ -2611,14 +2611,14 @@ class Trainer:
                         ):
                             with context():
                                 tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
-                    print(tr_loss_step)
+                    print("loss", tr_loss_step)
                     loss_reduce_grp = (
                         self.accelerator.torch_device_mesh["dp_cp"].get_group()
                         if self.accelerator.parallelism_config.dp_cp_dim_names
                         else None
                     )
                     dist.all_reduce(tr_loss_step, op=dist.ReduceOp.AVG, group=loss_reduce_grp)
-                    print(tr_loss_step)
+                    print("loss after reduction", tr_loss_step)
                     if (
                         args.logging_nan_inf_filter
                         and not is_torch_xla_available()
