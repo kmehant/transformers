@@ -464,8 +464,9 @@ def _end_ptr(tensor: torch.Tensor) -> int:
         try:
             stop = tensor.view(-1)[-1].data_ptr() + tensor.element_size()
         except:
-            print(tensor)
-            print(tensor.full_tensor())
+            # print(tensor)
+            print("ft", tensor.full_tensor())
+            print("ftview", tensor.full_tensor().view(-1))
             print(tensor.view(-1))
             print(tensor.view(-1)[-1])
             exit(1)
