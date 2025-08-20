@@ -467,7 +467,7 @@ def _end_ptr(tensor: torch.Tensor) -> int:
             # print(tensor)
             print("ft", tensor.full_tensor().numel())
             print("ftview", tensor.full_tensor().view(-1).numel())
-            torch.distributed.breakpoint()
+            # torch.distributed.breakpoint()
             a = tensor.view(-1)
             print(tensor.view(-1)[-1])
             exit(1)
