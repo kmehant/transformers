@@ -467,6 +467,7 @@ def _end_ptr(tensor: torch.Tensor) -> int:
             # print(tensor)
             print("ft", tensor.full_tensor().numel())
             print(f"local tensor size{torch.distributed.get_rank()}", tensor.to_local().numel())
+            print(f"local tensor shape{torch.distributed.get_rank()}", tensor.to_local().shape)
             # print("ftview", tensor.full_tensor().view(-1).numel())
             # torch.distributed.breakpoint()
             print(tensor.view(-1))
