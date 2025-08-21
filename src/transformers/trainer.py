@@ -2483,7 +2483,7 @@ class Trainer:
                         else contextlib.nullcontext
                     )
                     with context():
-                        with accelerator.profile() as prof:
+                        with self.accelerator.profile() as prof:
                             tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
 
                     if (
