@@ -2483,7 +2483,8 @@ class Trainer:
                         else contextlib.nullcontext
                     )
                     with context():
-                        tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+                        with accelerator.profile() as prof:
+                            tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
 
                     if (
                         args.logging_nan_inf_filter
@@ -5009,7 +5010,7 @@ class Trainer:
             args["dynamo_plugin"] = dynamo_plugin
 
         # create accelerator object
-        self.accelerator = Accelerator(**args)
+        self.accelerator = Accelerator(**args,kwargs_handlers=[profile_kwargs])
         # some Trainer classes need to use `gather` instead of `gather_for_metrics`, thus we store a flag
         self.gather_function = self.accelerator.gather_for_metrics
 
