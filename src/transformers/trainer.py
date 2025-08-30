@@ -3830,6 +3830,9 @@ class Trainer:
             if num_items_in_batch is not None:
                 kwargs["num_items_in_batch"] = num_items_in_batch
             inputs = {**inputs, **kwargs}
+        for n, p in model.named_parameters():
+            if p.requires_grad is True:
+                print(n, p.dtype)
         outputs = model(**inputs)
 
         # User-defined compute_loss function
