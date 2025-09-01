@@ -2183,6 +2183,10 @@ class Trainer:
     def _inner_training_loop(
         self, batch_size=None, args=None, resume_from_checkpoint=None, trial=None, ignore_keys_for_eval=None
     ):
+        torch.distributed.breakpoint()
+        # for n, p in model.named_parameters():
+        #     if p.requires_grad is True:
+        #         print(n, p.dtype)
         self.accelerator.free_memory()
         self._train_batch_size = batch_size
         if self.args.auto_find_batch_size:
@@ -3830,9 +3834,6 @@ class Trainer:
             if num_items_in_batch is not None:
                 kwargs["num_items_in_batch"] = num_items_in_batch
             inputs = {**inputs, **kwargs}
-        for n, p in model.named_parameters():
-            if p.requires_grad is True:
-                print(n, p.dtype)
         outputs = model(**inputs)
 
         # User-defined compute_loss function
