@@ -3830,6 +3830,7 @@ class Trainer:
             if num_items_in_batch is not None:
                 kwargs["num_items_in_batch"] = num_items_in_batch
             inputs = {**inputs, **kwargs}
+        print(f"model before forward - {model}")
         outputs = model(**inputs)
 
         # User-defined compute_loss function
