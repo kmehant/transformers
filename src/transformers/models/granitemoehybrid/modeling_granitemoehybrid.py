@@ -1172,7 +1172,6 @@ class GraniteMoeHybridDecoderLayer(GradientCheckpointingLayer):
         hidden_states = residual + hidden_states * self.residual_multiplier
         residual = hidden_states
         hidden_states = self.post_attention_layernorm(hidden_states)
-        print("self.shared_mlp.input_linear.dtype", self.shared_mlp.input_linear.weight.dtype)
         if self.has_experts:
             moe_hidden_states = self.block_sparse_moe(hidden_states)
             hidden_states = moe_hidden_states + self.shared_mlp(hidden_states)

@@ -2483,8 +2483,7 @@ class Trainer:
                         else contextlib.nullcontext
                     )
                     with context():
-                        with self.accelerator.profile() as prof:
-                            tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+                        tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
 
                     if (
                         args.logging_nan_inf_filter
@@ -3830,7 +3829,6 @@ class Trainer:
             if num_items_in_batch is not None:
                 kwargs["num_items_in_batch"] = num_items_in_batch
             inputs = {**inputs, **kwargs}
-        print(f"model before forward - {model}")
         outputs = model(**inputs)
 
         # User-defined compute_loss function

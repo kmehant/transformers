@@ -461,18 +461,7 @@ def load_state_dict(
 def _end_ptr(tensor: torch.Tensor) -> int:
     # extract the end of the pointer if the tensor is a slice of a bigger tensor
     if tensor.nelement():
-        try:
-            stop = tensor.view(-1)[-1].data_ptr() + tensor.element_size()
-        except:
-            # print(tensor)
-            print("ft", tensor.full_tensor().numel())
-            print(f"local tensor size{torch.distributed.get_rank()}", tensor.to_local().numel())
-            print(f"local tensor shape{torch.distributed.get_rank()}", tensor.to_local().shape)
-            # print("ftview", tensor.full_tensor().view(-1).numel())
-            # torch.distributed.breakpoint()
-            print(tensor.view(-1))
-            print(tensor.view(-1)[-1])
-            exit(1)
+        stop = tensor.view(-1)[-1].data_ptr() + tensor.element_size()
     else:
         stop = tensor.data_ptr()
     return stop
