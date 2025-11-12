@@ -2511,7 +2511,7 @@ class Trainer:
                                 _grad_norm = self.optimizer.clip_master_grads(args.max_grad_norm)
                             else:
                                 grad_norm_context = contextlib.nullcontext
-                                if self.is_tp_enabled or is_fsdp2:
+                                if self.is_tp_enabled:
                                     from torch.distributed._tensor.experimental import implicit_replication
 
                                     grad_norm_context = implicit_replication
@@ -2532,7 +2532,7 @@ class Trainer:
                         self.control = self.callback_handler.on_pre_optimizer_step(args, self.state, self.control)
 
                         context = contextlib.nullcontext
-                        if self.is_tp_enabled or is_fsdp2:
+                        if self.is_tp_enabled:
                             from torch.distributed._tensor.experimental import implicit_replication
 
                             context = implicit_replication
@@ -5012,7 +5012,7 @@ class Trainer:
             args["dynamo_plugin"] = dynamo_plugin
 
         # create accelerator object
-        self.accelerator = Accelerator(**args,kwargs_handlers=[profile_kwargs])
+        self.accelerator = Accelerator(**args)
         # some Trainer classes need to use `gather` instead of `gather_for_metrics`, thus we store a flag
         self.gather_function = self.accelerator.gather_for_metrics
 
