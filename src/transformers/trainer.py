@@ -2614,13 +2614,16 @@ class Trainer:
                         print("atn ids shape", inputs["attention_mask"].shape)
                         print("label ids shape", inputs["labels"].shape)
                     with context():
-                        with self.accelerator.maybe_context_parallel(
-                            buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
-                            buffer_seq_dims=[1, 1, 1],
-                            no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
-                            ):
-                                tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
-                    print("loss", tr_loss_step)
+                        if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
+                            with self.accelerator.maybe_context_parallel(
+                                buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
+                                buffer_seq_dims=[1, 1, 1],
+                                no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
+                                ):
+                                    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+                        else:
+                            tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         loss_reduce_grp = (
                             self.accelerator.torch_device_mesh["dp_cp"].get_group()
@@ -2628,7 +2631,7 @@ class Trainer:
                             else None
                         )
                         dist.all_reduce(tr_loss_step, op=dist.ReduceOp.AVG, group=loss_reduce_grp)
-                        print("loss after reduction", tr_loss_step)
+                        print("loss after reduction on each rank", tr_loss_step)
 
                     if (
                         args.logging_nan_inf_filter
