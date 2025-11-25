@@ -2618,7 +2618,8 @@ class Trainer:
                             with self.accelerator.maybe_context_parallel(
                                 buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
                                 buffer_seq_dims=[1, 1, 1],
-                                no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
+                                no_restore_buffers={},
+                                # no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
                                 ):
                                     tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
                         else:
