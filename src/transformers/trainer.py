@@ -2605,7 +2605,9 @@ class Trainer:
                             'shift_labels': torch.stack(labels),
                         }
                     inputs = pad_batch(inputs)
-                    print("input ids shape", inputs["input_ids"].shape)
+                    print("buffer: input ids shape", inputs["input_ids"].size()[1])
+                    print("buffer: shift_labels shape", inputs["shift_labels"].size()[1])
+                    print("buffer: labels shape", inputs["labels"].size()[1])
                     print("input ids", inputs["input_ids"])
                     print("atn ids shape", inputs["attention_mask"].shape)
                     print("label ids shape", inputs["labels"].shape)
