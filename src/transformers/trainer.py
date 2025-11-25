@@ -2578,10 +2578,6 @@ class Trainer:
                         and self.accelerator.distributed_type != DistributedType.DEEPSPEED
                         else contextlib.nullcontext
                     )
-                    print("before input ids shape", inputs["input_ids"].shape)
-                    print("before input ids", inputs["input_ids"])
-                    print("before attn ids shape", inputs["attention_mask"].shape)
-                    print("before labels ids shape", inputs["labels"].shape)
                     @torch.no_grad()
                     def pad_batch(batch, pad_token_id=0, label_pad_token_id=-100):
                         max_length = 0
@@ -2605,14 +2601,18 @@ class Trainer:
                             'labels': torch.stack(labels),
                             'shift_labels': torch.stack(labels),
                         }
-                    if hasattr(self.accelerator, "parallelism_config") and hasattr(self.accelerator.parallelism_config, "cp_size") and self.accelerator.parallelism_config.cp_size > 1:
+                    if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
+                        print("before input ids shape", inputs["input_ids"].shape)
+                        print("before input ids", inputs["input_ids"])
+                        print("before attn ids shape", inputs["attention_mask"].shape)
+                        print("before labels ids shape", inputs["labels"].shape)
                         inputs = pad_batch(inputs)
-                    print("buffer: input ids shape", inputs["input_ids"].size()[1])
-                    print("buffer: shift_labels shape", inputs["shift_labels"].size()[1])
-                    print("buffer: labels shape", inputs["labels"].size()[1])
-                    print("input ids", inputs["input_ids"])
-                    print("atn ids shape", inputs["attention_mask"].shape)
-                    print("label ids shape", inputs["labels"].shape)
+                        print("buffer: input ids shape", inputs["input_ids"].size()[1])
+                        print("buffer: shift_labels shape", inputs["shift_labels"].size()[1])
+                        print("buffer: labels shape", inputs["labels"].size()[1])
+                        print("input ids", inputs["input_ids"])
+                        print("atn ids shape", inputs["attention_mask"].shape)
+                        print("label ids shape", inputs["labels"].shape)
                     with context():
                         with self.accelerator.maybe_context_parallel(
                             buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
@@ -2621,13 +2621,14 @@ class Trainer:
                             ):
                                 tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
                     print("loss", tr_loss_step)
-                    loss_reduce_grp = (
-                        self.accelerator.torch_device_mesh["dp_cp"].get_group()
-                        if self.accelerator.parallelism_config.dp_cp_dim_names
-                        else None
-                    )
-                    dist.all_reduce(tr_loss_step, op=dist.ReduceOp.AVG, group=loss_reduce_grp)
-                    print("loss after reduction", tr_loss_step)
+                    if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
+                        loss_reduce_grp = (
+                            self.accelerator.torch_device_mesh["dp_cp"].get_group()
+                            if self.accelerator.parallelism_config.dp_cp_dim_names
+                            else None
+                        )
+                        dist.all_reduce(tr_loss_step, op=dist.ReduceOp.AVG, group=loss_reduce_grp)
+                        print("loss after reduction", tr_loss_step)
 
                     if (
                         args.logging_nan_inf_filter
