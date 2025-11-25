@@ -2605,7 +2605,8 @@ class Trainer:
                             'labels': torch.stack(labels),
                             'shift_labels': torch.stack(labels),
                         }
-                    inputs = pad_batch(inputs)
+                    if hasattr(self.accelerator, "parallelism_config") and hasattr(self.accelerator.parallelism_config, "cp_size") and self.accelerator.parallelism_config.cp_size > 1:
+                        inputs = pad_batch(inputs)
                     print("buffer: input ids shape", inputs["input_ids"].size()[1])
                     print("buffer: shift_labels shape", inputs["shift_labels"].size()[1])
                     print("buffer: labels shape", inputs["labels"].size()[1])
