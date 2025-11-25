@@ -2586,7 +2586,8 @@ class Trainer:
                     def pad_batch(batch, pad_token_id=0, label_pad_token_id=-100):
                         max_length = 0
                         max_length = batch["input_ids"].shape[1]
-                        max_length = ((max_length + 3) // 4) * 4
+                        cp_size = self.accelerator.parallelism_config.cp_size
+                        max_length = ((max_length + (cp_size-1)) // cp_size) * cp_size
                         def pad_and_truncate(sequence, pad_value, max_length):
                             sequence = sequence[:max_length]
                             return torch.cat([
