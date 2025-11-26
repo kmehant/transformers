@@ -2613,7 +2613,7 @@ class Trainer:
                             'input_ids': input_ids,
                             'attention_mask': attention_mask,
                             'labels': labels,
-                            'shift_labels': shift_labels,
+                            # 'shift_labels': shift_labels,
                             "position_ids": position_ids,
                         }
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
@@ -2623,7 +2623,7 @@ class Trainer:
                         print("before labels ids shape", inputs["labels"].shape)
                         inputs = pad_batch(inputs)
                         print("buffer: input ids shape", inputs["input_ids"].size()[1])
-                        print("buffer: shift_labels shape", inputs["shift_labels"].size()[1])
+                        # print("buffer: shift_labels shape", inputs["shift_labels"].size()[1])
                         print("buffer: labels shape", inputs["labels"].size()[1])
                         print("input ids", inputs["input_ids"])
                         print("atn ids shape", inputs["attention_mask"].shape)
@@ -2631,7 +2631,8 @@ class Trainer:
                     with context():
                         if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                             with self.accelerator.maybe_context_parallel(
-                                buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
+                                # buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
+                                buffers= [inputs["input_ids"], inputs["labels"]], 
                                 buffer_seq_dims=[1, 1, 1],
                                 no_restore_buffers={},
                                 # no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
