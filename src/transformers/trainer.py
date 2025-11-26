@@ -2492,6 +2492,8 @@ class Trainer:
 
         for epoch in range(epochs_trained, num_train_epochs):
             epoch_dataloader = train_dataloader
+            print(f"train_dataloader.collate_fn {train_dataloader.collate_fn}")
+            print(f"train_dataloader.dataset {train_dataloader.dataset}")
             if hasattr(epoch_dataloader, "set_epoch"):
                 epoch_dataloader.set_epoch(epoch)
 
