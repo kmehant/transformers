@@ -2578,6 +2578,7 @@ class Trainer:
                         and self.accelerator.distributed_type != DistributedType.DEEPSPEED
                         else contextlib.nullcontext
                     )
+                    print(f"batch input ids {batch['input_ids']}")
                     @torch.no_grad()
                     def pad_batch(batch, pad_token_id=0, label_pad_token_id=-100):
                         max_length = 0
