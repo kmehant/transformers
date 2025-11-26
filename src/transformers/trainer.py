@@ -2607,8 +2607,8 @@ class Trainer:
                         shift_labels = torch.nn.functional.pad(labels, (0, 1), value=label_pad_token_id)
                         shift_labels = shift_labels[..., 1:].contiguous()
                         position_ids = torch.cumsum(torch.ones(size=input_ids.size(), dtype=input_ids.dtype, device=input_ids.device), dim=1) - 1
-                        input_ids = torch.nn.functional.pad(input_ids, (1, 0), value=pad_token_id)
-                        input_ids = input_ids[..., :-1].contiguous()
+                        # input_ids = torch.nn.functional.pad(input_ids, (1, 0), value=pad_token_id)
+                        # input_ids = input_ids[..., :-1].contiguous()
                         return {
                             'input_ids': input_ids,
                             'attention_mask': attention_mask,
