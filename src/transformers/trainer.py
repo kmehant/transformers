@@ -2595,10 +2595,10 @@ class Trainer:
                         attention_mask = [pad_and_truncate(torch.tensor(example), 0, max_length) for example in batch["attention_mask"]]
                         labels = [pad_and_truncate(torch.tensor(example), label_pad_token_id, max_length) for example in batch["labels"]]
                         return {
-                            'input_ids': torch.LongTensor(input_ids),
-                            'attention_mask': torch.LongTensor(attention_mask),
-                            'labels': torch.LongTensor(labels),
-                            'shift_labels': torch.LongTensor(labels)[..., 1:].contiguous(),
+                            'input_ids': torch.tensor(input_ids),
+                            'attention_mask': torch.tensor(attention_mask),
+                            'labels': torch.tensor(labels),
+                            'shift_labels': torch.tensor(labels)[..., 1:].contiguous(),
                         }
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         print("before input ids shape", inputs["input_ids"].shape)
