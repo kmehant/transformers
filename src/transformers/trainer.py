@@ -2535,6 +2535,8 @@ class Trainer:
                 # This is used to correctly scale the loss when the last accumulation step has fewer batches
                 self.current_gradient_accumulation_steps = len(batch_samples)
                 for i, inputs in enumerate(batch_samples):
+                    print(f"fresh inputs {inputs.shape}")
+                    
                     step += 1
                     do_sync_step = (step + 1) % args.gradient_accumulation_steps == 0 or (step + 1) == steps_in_epoch
                     # Since we perform prefetching, we need to manually set sync_gradients
@@ -2578,7 +2580,7 @@ class Trainer:
                         and self.accelerator.distributed_type != DistributedType.DEEPSPEED
                         else contextlib.nullcontext
                     )
-                    print(f"batch input ids {batch['input_ids']}")
+                    print(f"batch input ids {inputs['input_ids']}")
                     @torch.no_grad()
                     def pad_batch(batch, pad_token_id=0, label_pad_token_id=-100):
                         max_length = 0
