@@ -2624,8 +2624,8 @@ class Trainer:
                                     tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
                         else:
                             tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
-                            print(f"loss on rank {self.args.process_index} {tr_loss_step}")
 
+                    print(f"loss on rank {self.args.process_index} {tr_loss_step}")
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         loss_reduce_grp = (
                             self.accelerator.torch_device_mesh["dp_cp"].get_group()
