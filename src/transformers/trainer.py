@@ -2607,36 +2607,24 @@ class Trainer:
                         shift_labels = torch.nn.functional.pad(labels, (0, 1), value=label_pad_token_id)
                         shift_labels = shift_labels[..., 1:].contiguous()
                         position_ids = torch.cumsum(torch.ones(size=input_ids.size(), dtype=input_ids.dtype, device=input_ids.device), dim=1) - 1
-                        # input_ids = torch.nn.functional.pad(input_ids, (1, 0), value=pad_token_id)
-                        # input_ids = input_ids[..., :-1].contiguous()
                         return {
                             'input_ids': input_ids,
                             'attention_mask': attention_mask,
-                            'labels': labels,
-                            # 'shift_labels': shift_labels,
+                            # 'labels': labels,
+                            'shift_labels': shift_labels,
                             "position_ids": position_ids,
                         }
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
-                        print("before input ids shape", inputs["input_ids"].shape)
-                        print("before input ids", inputs["input_ids"])
-                        print("before attn ids shape", inputs["attention_mask"].shape)
-                        print("before labels ids shape", inputs["labels"].shape)
                         inputs = pad_batch(inputs)
-                        print("buffer: input ids shape", inputs["input_ids"].size()[1])
-                        # print("buffer: shift_labels shape", inputs["shift_labels"].size()[1])
-                        print("buffer: labels shape", inputs["labels"].size()[1])
-                        print("input ids", inputs["input_ids"])
-                        print("atn ids shape", inputs["attention_mask"].shape)
-                        print("label ids shape", inputs["labels"].shape)
                     with context():
                         if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                             with self.accelerator.maybe_context_parallel(
                                 # buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
-                                buffers= [inputs["input_ids"], inputs["labels"]], 
+                                buffers= [inputs["input_ids"], inputs["shift_labels"]], 
                                 # buffer_seq_dims=[1, 1, 1],
                                 buffer_seq_dims=[1, 1],
-                                no_restore_buffers={},
                                 # no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
+                                no_restore_buffers={inputs["input_ids"], inputs["shift_labels"]},
                                 ):
                                     tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
                         else:
