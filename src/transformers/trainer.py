@@ -2601,10 +2601,10 @@ class Trainer:
                         labels = [pad_and_truncate(torch.tensor(example), label_pad_token_id, max_length) for example in batch["labels"]]
                         print("input_ids print", input_ids)
                         return {
-                            'input_ids': torch.cat(input_ids),
-                            'attention_mask': torch.cat(attention_mask),
-                            'labels': torch.cat(labels),
-                            'shift_labels': torch.cat(labels)[..., 1:].contiguous(),
+                            'input_ids': torch.stack(input_ids),
+                            'attention_mask': torch.stack(attention_mask),
+                            'labels': torch.stack(labels),
+                            'shift_labels': torch.stack(labels)[..., 1:].contiguous(),
                         }
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         print("before input ids shape", inputs["input_ids"].shape)
