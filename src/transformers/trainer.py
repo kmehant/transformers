@@ -2633,7 +2633,8 @@ class Trainer:
                             with self.accelerator.maybe_context_parallel(
                                 # buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
                                 buffers= [inputs["input_ids"], inputs["labels"]], 
-                                buffer_seq_dims=[1, 1, 1],
+                                # buffer_seq_dims=[1, 1, 1],
+                                buffer_seq_dims=[1, 1],
                                 no_restore_buffers={},
                                 # no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
                                 ):
