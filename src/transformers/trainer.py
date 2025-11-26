@@ -2585,6 +2585,8 @@ class Trainer:
                     print(f"batch input ids {inputs['input_ids']}")
                     @torch.no_grad()
                     def pad_batch(batch, pad_token_id=0, label_pad_token_id=-100):
+                        # adds pad tokens at the start
+                        # required to make sequences multiple of cp_size * 2
                         max_length = 0
                         max_length = batch["input_ids"].shape[1]
                         cp_size_multiple = self.accelerator.parallelism_config.cp_size * 2
@@ -2596,15 +2598,23 @@ class Trainer:
                                 sequence
                             ])
 
-                        input_ids = [pad_and_truncate(torch.tensor(example), pad_token_id, max_length) for example in batch["input_ids"]]
-                        attention_mask = [pad_and_truncate(torch.tensor(example), 0, max_length) for example in batch["attention_mask"]]
-                        labels = [pad_and_truncate(torch.tensor(example), label_pad_token_id, max_length) for example in batch["labels"]]
+                        input_ids = torch.stack([pad_and_truncate(torch.tensor(example), pad_token_id, max_length) for example in batch["input_ids"]])
+                        attention_mask = torch.stack([pad_and_truncate(torch.tensor(example), 0, max_length) for example in batch["attention_mask"]])
+                        labels = torch.stack([pad_and_truncate(torch.tensor(example), label_pad_token_id, max_length) for example in batch["labels"]])
                         print("input_ids print", input_ids)
+                        
+                        # shift input_ids and labels for using shift_labels for loss computation
+                        shift_labels = torch.nn.functional.pad(labels, (0, 1), value=label_pad_token_id)
+                        shift_labels = shift_labels[..., 1:].contiguous()
+                        position_ids = torch.cumsum(torch.ones(size=input_ids.size(), dtype=input_ids.dtype, device=input_ids.device), dim=1) - 1
+                        input_ids = torch.nn.functional.pad(input_ids, (1, 0), value=pad_token_id)
+                        input_ids = input_ids[..., :-1].contiguous()
                         return {
-                            'input_ids': torch.stack(input_ids),
-                            'attention_mask': torch.stack(attention_mask),
-                            'labels': torch.stack(labels),
-                            'shift_labels': torch.stack(labels)[..., 1:].contiguous(),
+                            'input_ids': input_ids,
+                            'attention_mask': attention_mask,
+                            'labels': labels,
+                            'shift_labels': shift_labels,
+                            "position_ids": position_ids,
                         }
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         print("before input ids shape", inputs["input_ids"].shape)
