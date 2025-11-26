@@ -2492,8 +2492,6 @@ class Trainer:
 
         for epoch in range(epochs_trained, num_train_epochs):
             epoch_dataloader = train_dataloader
-            print(f"train_dataloader.collate_fn {train_dataloader.collate_fn}")
-            print(f"train_dataloader.dataset {train_dataloader.dataset}")
             if hasattr(epoch_dataloader, "set_epoch"):
                 epoch_dataloader.set_epoch(epoch)
 
@@ -2537,7 +2535,6 @@ class Trainer:
                 # This is used to correctly scale the loss when the last accumulation step has fewer batches
                 self.current_gradient_accumulation_steps = len(batch_samples)
                 for i, inputs in enumerate(batch_samples):
-                    print(f"rank {self.args.process_index} fresh inputs {inputs['input_ids'].shape}")
                     
                     step += 1
                     do_sync_step = (step + 1) % args.gradient_accumulation_steps == 0 or (step + 1) == steps_in_epoch
@@ -2582,7 +2579,6 @@ class Trainer:
                         and self.accelerator.distributed_type != DistributedType.DEEPSPEED
                         else contextlib.nullcontext
                     )
-                    print(f"batch input ids {inputs['input_ids']}")
                     @torch.no_grad()
                     def pad_batch(batch, pad_token_id=0, label_pad_token_id=-100):
                         # adds pad tokens at the start
@@ -2601,7 +2597,6 @@ class Trainer:
                         input_ids = torch.stack([pad_and_truncate(torch.tensor(example), pad_token_id, max_length) for example in batch["input_ids"]])
                         attention_mask = torch.stack([pad_and_truncate(torch.tensor(example), 0, max_length) for example in batch["attention_mask"]])
                         labels = torch.stack([pad_and_truncate(torch.tensor(example), label_pad_token_id, max_length) for example in batch["labels"]])
-                        print("input_ids print", input_ids)
                         
                         # shift input_ids and labels for using shift_labels for loss computation
                         shift_labels = torch.nn.functional.pad(labels, (0, 1), value=label_pad_token_id)
@@ -2610,7 +2605,7 @@ class Trainer:
                         return {
                             'input_ids': input_ids,
                             'attention_mask': attention_mask,
-                            # 'labels': labels,
+                            'labels': labels,
                             'shift_labels': shift_labels,
                             "position_ids": position_ids,
                         }
@@ -2619,18 +2614,15 @@ class Trainer:
                     with context():
                         if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                             with self.accelerator.maybe_context_parallel(
-                                # buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
-                                buffers= [inputs["input_ids"], inputs["shift_labels"]], 
-                                # buffer_seq_dims=[1, 1, 1],
-                                buffer_seq_dims=[1, 1],
-                                # no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
-                                no_restore_buffers={inputs["input_ids"], inputs["shift_labels"]},
+                                buffers= [inputs["input_ids"], inputs["shift_labels"], inputs["labels"]], 
+                                buffer_seq_dims=[1, 1, 1],
+                                no_restore_buffers={inputs["input_ids"], inputs["shift_labels"], inputs["labels"]},
                                 ):
                                     tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
                         else:
                             tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
 
-                    print(f"loss on rank {self.args.process_index} {tr_loss_step}")
+                    logger.info(f"loss on rank {self.args.process_index} {tr_loss_step}")
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         loss_reduce_grp = (
                             self.accelerator.torch_device_mesh["dp_cp"].get_group()
@@ -2638,7 +2630,6 @@ class Trainer:
                             else None
                         )
                         dist.all_reduce(tr_loss_step, op=dist.ReduceOp.AVG, group=loss_reduce_grp)
-                        print("loss after reduction on each rank", tr_loss_step)
 
                     if (
                         args.logging_nan_inf_filter
