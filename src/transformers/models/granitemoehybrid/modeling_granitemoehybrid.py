@@ -1179,7 +1179,7 @@ class GraniteMoeHybridDecoderLayer(GradientCheckpointingLayer):
         """
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
-
+        print(f"inside layer {self.layer_type} start {hidden_states.shape}")
         if self.mamba is not None:
             hidden_states = self.mamba(
                 hidden_states=hidden_states,
@@ -1201,7 +1201,7 @@ class GraniteMoeHybridDecoderLayer(GradientCheckpointingLayer):
                 position_embeddings=position_embeddings,
                 **kwargs,
             )
-
+        print(f"inside layer {self.layer_type} end {hidden_states.shape}")
         hidden_states = residual + hidden_states * self.residual_multiplier
 
         # Fully Connected
@@ -1386,6 +1386,7 @@ class GraniteMoeHybridModel(GraniteMoeHybridPreTrainedModel):
         all_router_logits = () if output_router_logits else None
 
         for decoder_layer in self.layers:
+            print(f"at layer {decoder_layer.layer_type} start {hidden_states.shape}")
             # Depending on the layer type we opt for 2D base attention mask (Mamba) or 4D causal mask (Attention)
             layer_mask = mamba_mask if decoder_layer.layer_type == "mamba" else causal_mask
 
@@ -1405,7 +1406,7 @@ class GraniteMoeHybridModel(GraniteMoeHybridPreTrainedModel):
             )
 
             hidden_states = layer_outputs[0]
-
+            print(f"at layer {decoder_layer.layer_type} end {hidden_states.shape}")
             if output_attentions:
                 if layer_outputs[1] is not None:
                     # append attentions only of attention layers. Mamba layers return `None` as the attention weights
