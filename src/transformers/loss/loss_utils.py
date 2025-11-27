@@ -56,6 +56,8 @@ def ForCausalLMLoss(
 ) -> torch.Tensor:
     # Upcast to float if we need to compute the loss to avoid potential precision issues
     logits = logits.float()
+    
+    print(f"shift_labels {shift_labels}")
 
     if shift_labels is None:
         # Shift so that tokens < n predict n
