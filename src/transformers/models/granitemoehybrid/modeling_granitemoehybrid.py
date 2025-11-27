@@ -1752,6 +1752,8 @@ class GraniteMoeHybridForCausalLM(GraniteMoeHybridPreTrainedModel, GenerationMix
             # Upcast to float if we need to compute the loss to avoid potential precision issues
             logits = logits.float()
             # Flatten the tokens
+            print(f"loss function {self.loss_function}")
+            print(f"kwargs {kwargs}")
             loss = self.loss_function(
                 logits,
                 labels,
