@@ -2629,7 +2629,10 @@ class Trainer:
                             if self.accelerator.parallelism_config.dp_cp_dim_names
                             else None
                         )
-                        dist.all_reduce(tr_loss_step, op=dist.ReduceOp.AVG, group=loss_reduce_grp)
+                        if num_items_in_batch:
+                            dist.all_reduce(tr_loss_step, op=dist.ReduceOp.SUM, group=loss_reduce_grp)
+                        else:
+                            dist.all_reduce(tr_loss_step, op=dist.ReduceOp.AVG, group=loss_reduce_grp)
 
                     if (
                         args.logging_nan_inf_filter
