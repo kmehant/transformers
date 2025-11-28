@@ -2521,6 +2521,9 @@ class Trainer:
             epoch_iterator = iter(epoch_dataloader)
             print(f"epoch_dataloader {epoch_dataloader}")
             print(f"collator {epoch_dataloader.collate_fn}")
+            print(f"train_dataset {self.train_dataset}")
+            it = iter(self.train_dataset)
+            print(f"next {next(self.train_dataset)}")
             # We chunkify the epoch iterator into gradient accumulation steps `n` batches
             remainder = steps_in_epoch % args.gradient_accumulation_steps
             if remainder == 0:
