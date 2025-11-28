@@ -2594,9 +2594,9 @@ class Trainer:
                                 sequence
                             ])
 
-                        input_ids = torch.stack([pad_and_truncate(torch.tensor(example), pad_token_id, max_length) for example in batch["input_ids"]])
-                        attention_mask = torch.stack([pad_and_truncate(torch.tensor(example), 0, max_length) for example in batch["attention_mask"]])
-                        labels = torch.stack([pad_and_truncate(torch.tensor(example), label_pad_token_id, max_length) for example in batch["labels"]])
+                        input_ids = torch.stack([pad_and_truncate(example, pad_token_id, max_length) for example in batch["input_ids"]])
+                        attention_mask = torch.stack([pad_and_truncate(example, 0, max_length) for example in batch["attention_mask"]])
+                        labels = torch.stack([pad_and_truncate(example, label_pad_token_id, max_length) for example in batch["labels"]])
                         
                         # shift input_ids and labels for using shift_labels for loss computation
                         shift_labels = torch.nn.functional.pad(labels, (0, 1), value=label_pad_token_id)
@@ -2611,6 +2611,7 @@ class Trainer:
                         }
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         inputs = pad_batch(inputs)
+                    print(f"inputs {inputs}")
                     with context():
                         if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                             with self.accelerator.maybe_context_parallel(
