@@ -2534,8 +2534,9 @@ class Trainer:
                 # Store the number of batches for current gradient accumulation
                 # This is used to correctly scale the loss when the last accumulation step has fewer batches
                 self.current_gradient_accumulation_steps = len(batch_samples)
+                print(f"batch samples  {batch_samples}")
                 for i, inputs in enumerate(batch_samples):
-                    
+                    print(f"inputs at start {inputs}")
                     step += 1
                     do_sync_step = (step + 1) % args.gradient_accumulation_steps == 0 or (step + 1) == steps_in_epoch
                     # Since we perform prefetching, we need to manually set sync_gradients
@@ -2609,6 +2610,7 @@ class Trainer:
                             'shift_labels': shift_labels,
                             "position_ids": position_ids,
                         }
+                    print(f"before inputs {inputs}")
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         inputs = pad_batch(inputs)
                     print(f"inputs {inputs}")
