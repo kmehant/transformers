@@ -2631,6 +2631,7 @@ class Trainer:
                         )
                         if num_items_in_batch:
                             dist.all_reduce(tr_loss_step, op=dist.ReduceOp.SUM, group=loss_reduce_grp)
+                            tr_loss_step = tr_loss_step / (getattr(self.accelerator.parallelism_config, "dp_replicate_size", 1) * getattr(self.accelerator.parallelism_config, "dp_shard_size", 1))
                         else:
                             dist.all_reduce(tr_loss_step, op=dist.ReduceOp.AVG, group=loss_reduce_grp)
 
