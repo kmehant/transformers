@@ -608,8 +608,6 @@ class Trainer:
             else default_data_collator
         )
         self.data_collator = data_collator if data_collator is not None else default_collator
-        it = iter(train_dataset)
-        print(f"next {next(it)}")
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
         self.processing_class = processing_class
@@ -2521,11 +2519,6 @@ class Trainer:
 
             step = -1
             epoch_iterator = iter(epoch_dataloader)
-            print(f"epoch_dataloader {epoch_dataloader}")
-            print(f"collator {epoch_dataloader.collate_fn}")
-            print(f"train_dataset {self.train_dataset}")
-            it = iter(self.train_dataset)
-            print(f"next {next(it)}")
             # We chunkify the epoch iterator into gradient accumulation steps `n` batches
             remainder = steps_in_epoch % args.gradient_accumulation_steps
             if remainder == 0:
@@ -2541,9 +2534,7 @@ class Trainer:
                 # Store the number of batches for current gradient accumulation
                 # This is used to correctly scale the loss when the last accumulation step has fewer batches
                 self.current_gradient_accumulation_steps = len(batch_samples)
-                print(f"batch samples  {batch_samples}")
                 for i, inputs in enumerate(batch_samples):
-                    print(f"inputs at start {inputs}")
                     step += 1
                     do_sync_step = (step + 1) % args.gradient_accumulation_steps == 0 or (step + 1) == steps_in_epoch
                     # Since we perform prefetching, we need to manually set sync_gradients
@@ -2617,10 +2608,8 @@ class Trainer:
                             'shift_labels': shift_labels,
                             "position_ids": position_ids,
                         }
-                    print(f"before inputs {inputs}")
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         inputs = pad_batch(inputs)
-                    print(f"inputs {inputs}")
                     with context():
                         if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                             with self.accelerator.maybe_context_parallel(
