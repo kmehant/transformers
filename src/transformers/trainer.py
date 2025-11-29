@@ -2610,6 +2610,7 @@ class Trainer:
                         }
                     if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                         inputs = pad_batch(inputs)
+                    print(f"inputs {inputs["input_ids"].size()}")
                     with context():
                         if self.accelerator.parallelism_config and self.accelerator.parallelism_config.cp_enabled:
                             with self.accelerator.maybe_context_parallel(
